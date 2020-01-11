@@ -60,22 +60,42 @@ bool Ability::collisionAABBvsCircle(double x, double y, int width, int height) {
 
 }
 
-void Ability::shield(std::vector<Asteroid> &asteroids) {
-
+void Ability::shield(std::vector<Asteroid> &asteroids, double shipSpeed) {
+    for (auto &asteroid : asteroids) {
+        if (collisionAABBvsCircle(asteroid.getLeftUpX(), asteroid.getLeftUpY(), asteroid.getWidth(),
+                                  asteroid.getHeight()))
+            asteroid.setSpeed(shipSpeed);
+    }
 }
 
 void Ability::homingMissile(double targetX, double targetY) {
     double d = perpDot(targetX - missileX, targetY - missileY, missileVX, missileVY);
+    auto theta = asin(
+            d / (sqrt(missileX * missileX + missileY * missileY) * sqrt(targetX * targetX + targetY * targetY)));
 
     if (d < 0) {
+        auto dx = directionX * cos(theta) - directionY * sin(theta);
+        auto dy = directionX * sin(theta) + directionY * cos(theta);
 
+        directionX = dx;
+        directionY = dy;
     } else if (d > 0) {
+        auto dx = directionX * cos(theta) + directionY * sin(theta);
+        auto dy = directionX * sin(theta) - directionY * cos(theta);
 
+        directionX = dx;
+        directionY = dy;
     } else {
         d = dot(targetX - missileX, targetY - missileY, missileVX, missileVY);
+        theta = acos(
+                d / (sqrt(missileX * missileX + missileY * missileY) * sqrt(targetX * targetX + targetY * targetY)));
 
         if (d < 0) {
+            auto dx = directionX * cos(theta) - directionY * sin(theta);
+            auto dy = directionX * sin(theta) + directionY * cos(theta);
 
+            directionX = dx;
+            directionY = dy;
         } else {
 
         }
@@ -88,7 +108,7 @@ Ability::getNearestEnemy(std::vector<Asteroid> asteroids, double &asteroidX, dou
     asteroidX = 0;
     asteroidY = 0;
 
-    for (auto & asteroid : asteroids) {
+    for (auto &asteroid : asteroids) {
         double x = asteroid.getLeftUpX() + asteroid.getDirectionX() * asteroid.getSpeed() - positionX;
         double y = asteroid.getLeftUpY() + asteroid.getDirectionY() * asteroid.getSpeed() - positionY;
 
@@ -96,16 +116,11 @@ Ability::getNearestEnemy(std::vector<Asteroid> asteroids, double &asteroidX, dou
 
         if (currentDistance < distance) {
             distance = currentDistance;
-            asteroidX =  asteroid.getLeftUpX();
+            asteroidX = asteroid.getLeftUpX();
             asteroidY = asteroid.getLeftUpY();
         }
     }
 
-}
-
-void Ability::autoshoting(std::vector<Asteroid> asteroids, int screen_width, int screen_height) {
-//    std::__wrap_iter<Asteroid *> *asteroid = getNearestEnemy(asteroids, <#initializer#>, <#initializer#>);
-    //    delete []asteroid;
 }
 
 int Ability::getAbilityNum() {

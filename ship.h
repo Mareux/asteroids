@@ -10,8 +10,6 @@ class Ship : public GameObject {
 public:
     Ship(double x, double y, double speed, double dirX, double dirY, int width, int height, int bulletQuantity);
 
-    std::vector<Bullet*> getSpawnedBullets();
-
     void createBullet(int x, int y);
 
     void moveBullet(int screen_w, int screen_h);
@@ -29,10 +27,6 @@ public:
     void setSpeedX(double x);
 
     void setSpeedY(double y);
-
-    std::vector<Ability*> getAbilities();
-
-    void setAbility(std::vector<Ability*> abil);
 
     void applyVelocity(double &x, double&y);
 

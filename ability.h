@@ -16,13 +16,11 @@ public:
 
     bool collisionAABBvsCircle(double x, double y, int width, int height);
 
-    void shield(std::vector<Asteroid> &asteroids);
+    void shield(std::vector<Asteroid> &asteroids, double shipSpeed);
 
     void homingMissile(double targetX, double targetY);
 
     void getNearestEnemy(std::vector<Asteroid> asteroids, double &asteroidX, double &asteroidY);
-
-    void autoshoting(std::vector<Asteroid> asteroids, int screen_width, int screen_height);
 
     int getAbilityNum();
 

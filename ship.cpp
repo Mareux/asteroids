@@ -116,7 +116,6 @@ void Ship::setSpeedY(double y) {
     speedY = y;
 }
 
-
 void Ship::applyVelocity(double &x, double &y) {
     x += velocityX;
     y += velocityY;
@@ -145,7 +144,7 @@ void Ship::shipMovement() {
 }
 
 void Ship::createAbility(double x, double y, int width, int height) {
-    auto *ability = new Ability(3, x, y, width, height);
+    auto *ability = new Ability(rand() % 3 + 1, x, y, width, height);
 
     spawnedAbilities.push_back(ability);
 }
