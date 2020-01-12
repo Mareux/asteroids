@@ -63,6 +63,7 @@ private:
     double abilityProbability;
 
     bool abilityUsed = false;
+    bool gameOver = false;
 
     Asteroid addSmallAsteroid() {
         Asteroid asteroid = Asteroid(false);
@@ -214,6 +215,27 @@ private:
         }
     }
 
+    bool shipCollision() {
+
+        for (auto & asteroid : asteroids ){
+            if (ship->collision(asteroid.getLeftUpX(), asteroid.getLeftUpY(),
+                    asteroid.getWidth(), asteroid.getHeight()))
+                return true;
+        }
+        return false;
+    }
+
+    void restart(){
+        asteroids.clear();
+        delete ship;
+
+        gameOver = false;
+        abilityUsed = false;
+        cameraX = 0;
+        cameraY = 0;
+        asteroids = createAsteroids(numAsteroids);
+        createShip();
+    }
 
 public:
 
@@ -278,6 +300,10 @@ public:
             asteroidsCollision(asteroids);
 
             moveAsteroids(asteroids, smallAsteroid, mapWidth, mapHeight);
+
+            if (shipCollision())
+                gameOver = true;
+
             ship->moveBullet(mapWidth, mapHeight);
             dealWithBulletCollision();
 
@@ -303,6 +329,8 @@ public:
         ship->drawAbility(abilitySprites, cameraX, cameraY);
         drawSprite(shipSprite, ship->getScreenX() - cameraX, ship->getScreenY() - cameraY);
         ship->drawBullet(bulletSprite, cameraX, cameraY);
+        if (gameOver)
+            restart();
         return false;
     }
 
