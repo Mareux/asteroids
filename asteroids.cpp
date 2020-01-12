@@ -9,19 +9,19 @@
 
 using namespace std;
 
-double dot(double a_x, double a_y, double b_x, double b_y){
+double dot(double a_x, double a_y, double b_x, double b_y) {
     return (a_x * b_x) + (a_y * b_y);
 }
 
-double perpDot(double a_x, double a_y, double b_x, double b_y){
+double perpDot(double a_x, double a_y, double b_x, double b_y) {
     return (a_y * b_x) - (a_x * b_y);
 }
 
-double    random_between_two_int(double min, double max){
+double random_between_two_int(double min, double max) {
     return (min + 1) + (((double) rand()) / (double) RAND_MAX) * (max - (min + 1));
 }
 
-int randomInt(int outerMin, int outerMax, int innerMin, int innerMax){
+int randomInt(int outerMin, int outerMax, int innerMin, int innerMax) {
     auto usableRange = innerMin - outerMin + outerMax - innerMax;
     auto threshold = innerMin - outerMin;
     auto num = floor(rand() % (usableRange + 1));
@@ -38,11 +38,10 @@ private:
     Sprite *smallAsteroid;
     Sprite *shipSprite;
     Sprite *bulletSprite;
-    Sprite *abilitySprite;
+    Sprite *cursor;
 
-    vector<Asteroid> bigAsteroids;
+    vector<Sprite *> abilitySprites;
     vector<Asteroid> asteroids;
-    vector<Asteroid> Asteroids;
     Ship *ship;
 
     const int FRAMES_PER_SECOND = 60;
@@ -56,16 +55,22 @@ private:
     int timer = 0;
     int widthSmall, heightSmall;
     int widthBig, heightBig;
+    int cursorW, cursorH;
+
+    int mapHeight, mapWidth;
+    int screenWidth, screenHeight;
+    int numAmmo, numAsteroids;
+    double abilityProbability;
 
     bool abilityUsed = false;
 
-    Asteroid addSmallAsteroid(){
+    Asteroid addSmallAsteroid() {
         Asteroid asteroid = Asteroid(false);
         asteroid.setObjectSize(widthSmall, heightSmall);
         return asteroid;
     }
 
-    Asteroid addBigAsteroid(){
+    Asteroid addBigAsteroid() {
         Asteroid asteroid = Asteroid(true);
         asteroid.setObjectSize(widthBig, heightBig);
         return asteroid;
@@ -78,16 +83,15 @@ private:
 
         cout << asteroidQuantity << endl;
 
-        for (auto i = 0; i < asteroidQuantity; ++i){
+        for (auto i = 0; i < asteroidQuantity; ++i) {
             bool big = rand() % 2;
 
             if (big) {
                 asteroid.emplace_back(addBigAsteroid());
-            }
-            else
+            } else
                 asteroid.emplace_back(addSmallAsteroid());
-            asteroid.at(i).setPositionX(randomInt(0, MAP_WIDTH, SCREEN_WIDTH / 2 - 50, SCREEN_WIDTH / 2 + 50));
-            asteroid.at(i).setPositionY(randomInt(0, MAP_HEIGHT, SCREEN_HEIGHT / 2 - 50, SCREEN_HEIGHT / 2 + 50));
+            asteroid.at(i).setPositionX(randomInt(0, mapWidth, screenWidth / 2 - 50, screenWidth / 2 + 50));
+            asteroid.at(i).setPositionY(randomInt(0, mapHeight, screenHeight / 2 - 50, screenHeight / 2 + 50));
 
             asteroid.at(i).setDirection(random_between_two_int(-2, 1), random_between_two_int(-2, 1));
 
@@ -98,22 +102,22 @@ private:
 
     }
 
-    void specialAbulity(){
+    void specialAbulity() {
 
     }
 
-    void dealWithBulletCollision(){
-        std::__wrap_iter<Asteroid*> asteroidPos;
+    void dealWithBulletCollision() {
+        std::__wrap_iter<Asteroid *> asteroidPos;
 
         if (ship->checkBulletCollision(asteroids, asteroidPos)) {
             double x = asteroidPos->getLeftUpX();
             double y = asteroidPos->getLeftUpY();
 
-            if (asteroidPos->isBig()){
+            if (asteroidPos->isBig()) {
 
                 asteroids.erase(asteroidPos);
 
-                cout<< "shoot!";
+                cout << "shoot!";
                 asteroids.emplace_back(addSmallAsteroid());
                 auto asteroid = asteroids.size() - 1;
                 asteroids.at(asteroid).setPositionY(y - 20);
@@ -128,15 +132,13 @@ private:
                 asteroids.at(asteroid).setDirection(1, 1);
                 asteroids.at(asteroid).setSpeed(5);
 
-            }
-            else {
+            } else {
                 asteroids.erase(asteroidPos);
             }
 
-            if (rand() % 100 < 100){
+            if (rand() % 100 < abilityProbability * 100) {
                 ship->createAbility(x, y, 20, 20);
             }
-
         }
     }
 
@@ -146,43 +148,39 @@ private:
         ship->applyVelocity(cameraX, cameraY);
 
         if (ship->getRightDownX() - cameraX < 0)
-            cameraX = MAP_WIDTH - SCREEN_WIDTH;
-        else if (ship->getLeftUpX() - cameraX > SCREEN_WIDTH)
+            cameraX = mapWidth - screenWidth;
+        else if (ship->getLeftUpX() - cameraX > screenWidth)
             cameraX = 0;
         if (ship->getRightDownY() - cameraY < 0)
-            cameraY = MAP_HEIGHT - SCREEN_HEIGHT;
-        else if (ship->getLeftUpY() - cameraY > SCREEN_HEIGHT)
-            cameraY = 0;   
-
-        if (cameraX < 0 || ceil(ship->getRightDownX() - cameraX) < SCREEN_WIDTH/2.0 - 1.0) {
-            cameraX = 0;
-        }
-        else if (cameraX + SCREEN_WIDTH > MAP_WIDTH ||  ceil(ship->getLeftUpX() - cameraX) > SCREEN_WIDTH/2.0 + 1){
-            cameraX = MAP_WIDTH - SCREEN_WIDTH;
-        }
-        if (cameraY < 0 || ceil(ship->getRightDownY() - cameraY) < SCREEN_HEIGHT/2.0 - 1.0) {
+            cameraY = mapHeight - screenHeight;
+        else if (ship->getLeftUpY() - cameraY > screenHeight)
             cameraY = 0;
+
+        if (cameraX < 0 || ship->getLeftUpX() < screenWidth / 2) {
+            cameraX = 0;
+        } else if (cameraX + screenWidth > mapWidth || mapWidth - ship->getLeftUpX() < screenWidth / 2) {
+            cameraX = mapWidth - screenWidth;
         }
-        else if (cameraY + SCREEN_HEIGHT > MAP_HEIGHT ||  ceil(ship->getLeftUpY() - cameraY) > SCREEN_HEIGHT/2.0 + 1){
-            cameraY = MAP_HEIGHT - SCREEN_HEIGHT;
+        if (cameraY < 0 || ship->getLeftUpY() < screenHeight / 2) {
+            cameraY = 0;
+        } else if (cameraY + screenHeight > mapHeight || mapHeight - ship->getLeftUpY() < screenHeight / 2) {
+            cameraY = mapHeight - screenHeight;
         }
     }//refactor
 
     static void moveAsteroids(vector<Asteroid> &asteroid, Sprite *asteroidSprite, int screen_w, int screen_h) {
 
-        for(auto & iter : asteroid){
+        for (auto &iter : asteroid) {
             iter.getObjectFromUnderworld(screen_w, screen_h);
             iter.movement();
         }
     }
 
-    static Ship* createShip(Sprite *shipSprite)
-    {
+    void createShip() {
         int width, height;
 
         getSpriteSize(shipSprite, width, height);
-        Ship *ship = new Ship(SCREEN_WIDTH/2.0, SCREEN_HEIGHT/2.0, 0.0, 0,0, width, height, 3);
-        return ship;
+        ship = new Ship(screenWidth / 2.0, screenHeight / 2.0, 0.0, 0, 0, width, height, numAmmo);
     }
 
     static void splitUpAsteroids(Asteroid &firstAsteroid, Asteroid &secondAsteroid) {
@@ -205,10 +203,11 @@ private:
     }
 
     static void asteroidsCollision(vector<Asteroid> &asteroid) {
-        for (auto firstIter = 0; firstIter < asteroid.size(); ++ firstIter){
+        for (auto firstIter = 0; firstIter < asteroid.size(); ++firstIter) {
             for (auto secondIter = firstIter + 1; secondIter < asteroid.size(); ++secondIter) {
                 if (asteroid[firstIter].collision(asteroid[secondIter].getLeftUpX(),
-                        asteroid[secondIter].getLeftUpY(), asteroid[secondIter].getWidth(), asteroid[secondIter].getHeight())) {
+                                                  asteroid[secondIter].getLeftUpY(), asteroid[secondIter].getWidth(),
+                                                  asteroid[secondIter].getHeight())) {
                     splitUpAsteroids(asteroid[firstIter], asteroid[secondIter]);
                 }
             }
@@ -218,36 +217,53 @@ private:
 
 public:
 
-	virtual void PreInit(int& width, int& height, bool& fullscreen)
-	{
-		width = SCREEN_WIDTH;
-		height = SCREEN_HEIGHT;
-		fullscreen = false;
-	}
+    MyFramework(int screen_width, int screen_height, int map_width, int map_height,
+                int num_ammo, int num_asteroids, double ability_probability) {
+        screenWidth = screen_width;
+        screenHeight = screen_height;
+        mapWidth = map_width;
+        mapHeight = map_height;
+        numAmmo = num_ammo;
+        numAsteroids = num_asteroids;
+        abilityProbability = ability_probability;
+    }
 
-	virtual bool Init() {
+    virtual void PreInit(int &width, int &height, bool &fullscreen) {
+        width = screenWidth;
+        height = screenHeight;
+        fullscreen = false;
+    }
+
+    virtual bool Init() {
 
         srand(time(0));
 
         bigAsteroid = createSprite("data/big_asteroid.png");
-        getSpriteSize(bigAsteroid, widthBig, heightBig);
         smallAsteroid = createSprite("data/small_asteroid.png");
-        getSpriteSize(smallAsteroid, widthSmall, heightSmall);
         shipSprite = createSprite("data/spaceship.png");
         bulletSprite = createSprite("data/bullet.png");
-        abilitySprite = createSprite("data/autoshoot.png");
+        cursor = createSprite("data/circle.tga");
+        abilitySprites.push_back(createSprite("data/shield.png"));
+        abilitySprites.push_back(createSprite("data/missile.png"));
+        abilitySprites.push_back(createSprite("data/autoshoot.png"));
+        abilitySprites.push_back(createSprite("data/sparkle.png"));
 
 
-        asteroids = createAsteroids(30);
-        ship = createShip(shipSprite);
+        getSpriteSize(bigAsteroid, widthBig, heightBig);
+        getSpriteSize(smallAsteroid, widthSmall, heightSmall);
+
+        asteroids = createAsteroids(numAsteroids);
+        createShip();
+        getSpriteSize(cursor, cursorW, cursorH);
+        showCursor(false);
         return true;
-	}
+    }
 
-	virtual void Close() {
+    virtual void Close() {
         system("leaks Project2");
     }
 
-	virtual bool Tick() {
+    virtual bool Tick() {
 //		drawTestBackground();
 
         currentFrameTime = getTickCount();
@@ -261,81 +277,104 @@ public:
 
             asteroidsCollision(asteroids);
 
-            moveAsteroids(asteroids, smallAsteroid, MAP_WIDTH, MAP_HEIGHT);
-            ship->moveBullet(MAP_WIDTH, MAP_HEIGHT);
+            moveAsteroids(asteroids, smallAsteroid, mapWidth, mapHeight);
+            ship->moveBullet(mapWidth, mapHeight);
             dealWithBulletCollision();
-            ship->getObjectFromUnderworld(MAP_WIDTH, MAP_HEIGHT);
 
-            ship->getAbility();
-            if(abilityUsed) {
-                ship->useAbility(asteroids, 0, 0);
-                abilityUsed = false;
+            if (!abilityUsed)
+                ship->getAbility();
+            if (abilityUsed) {
+                ship->useAbility(asteroids, screenWidth, screenHeight);
+
+//                abilityUsed = false;
             }
-
-
+            ship->getObjectFromUnderworld(mapWidth, mapHeight);
         }
-        for (auto & asteroid : asteroids) {
+
+        showCursor(true);
+        for (auto &asteroid : asteroids) {
             if (asteroid.isBig())
                 drawSprite(bigAsteroid, asteroid.getScreenX() - cameraX, asteroid.getScreenY() - cameraY);
             else
                 drawSprite(smallAsteroid, asteroid.getScreenX() - cameraX, asteroid.getScreenY() - cameraY);
         }
-        ship->drawAbility(abilitySprite, cameraX, cameraY);
+
+        drawSprite(cursor, mouse_x - cursorW / 2, mouse_y - cursorH / 2);
+        ship->drawAbility(abilitySprites, cameraX, cameraY);
         drawSprite(shipSprite, ship->getScreenX() - cameraX, ship->getScreenY() - cameraY);
         ship->drawBullet(bulletSprite, cameraX, cameraY);
         return false;
-	}
+    }
 
-	virtual void onMouseMove(int x, int y, int xrelative, int yrelative) {
-        mouse_x = x + cameraX;
-        mouse_y = y + cameraY;
-	}
+    virtual void onMouseMove(int x, int y, int xrelative, int yrelative) {
+        mouse_x = x;
+        mouse_y = y;
+    }
 
-	virtual void onMouseButtonClick(FRMouseButton button, bool isReleased) {
-        if (button == FRMouseButton::LEFT && !isReleased)
-        {
-            ship->createBullet(mouse_x, mouse_y);
-            cout<< mouse_x << " : " << mouse_y << endl;
+    virtual void onMouseButtonClick(FRMouseButton button, bool isReleased) {
+        if (button == FRMouseButton::LEFT && !isReleased) {
+            ship->createBullet(mouse_x + cameraX, mouse_y + cameraY);
+            cout << mouse_x << " : " << mouse_y << endl;
         }
-        if (button == FRMouseButton::RIGHT && !isReleased)
-        {
+        if (button == FRMouseButton::RIGHT && !isReleased) {
             abilityUsed = true;
         }
 
-	}
+    }
 
-	virtual void onKeyPressed(FRKey k) {
-        if (k == FRKey::LEFT){
+    virtual void onKeyPressed(FRKey k) {
+        if (k == FRKey::LEFT) {
             ship->setSpeedX(-10.0);
-        }
-        else if (k == FRKey::RIGHT){
+        } else if (k == FRKey::RIGHT) {
             ship->setSpeedX(10.0);
         }
-        if (k == FRKey::UP){
+        if (k == FRKey::UP) {
             ship->setSpeedY(-10.0);
-        }
-        else if (k == FRKey::DOWN){
+        } else if (k == FRKey::DOWN) {
             ship->setSpeedY(10.0);
         }
     }
 
-	virtual void onKeyReleased(FRKey k) {
-        if (k == FRKey::LEFT || k == FRKey::RIGHT){
+    virtual void onKeyReleased(FRKey k) {
+        if (k == FRKey::LEFT || k == FRKey::RIGHT) {
             ship->setSpeedX(0.0);
         }
-        if (k == FRKey::UP || k == FRKey::DOWN){
+        if (k == FRKey::UP || k == FRKey::DOWN) {
             ship->setSpeedY(0.0);
         }
-	}
+    }
 
-	virtual const char* GetTitle() override
-	{
-		return "asteroids";
-	}
+    virtual const char *GetTitle() override {
+        return "asteroids";
+    }
 
 };
 
-int main(int argc, char *argv[])
-{
-	return run(new MyFramework);
+int main(int argc, char *argv[]) {
+    int windowW = SCREEN_WIDTH, windowH = SCREEN_HEIGHT;
+    int mapW = MAP_WIDTH, mapH = MAP_HEIGHT;
+    int num_ammo = 1, num_asteroids = 30;
+    double ability_probability = 0.1;
+    string tmp;
+
+    if (argc > 1) {
+        for (auto i = 1; i < argc; ++i) {
+            if (!strcmp(argv[i], "-window")) {
+                tmp = argv[i + 1];
+                windowW = stoi(tmp.substr(0, tmp.find('x')));
+                windowH = stoi(tmp.substr(tmp.find('x') + 1, tmp.length() - tmp.find('x')));
+            } else if (!strcmp(argv[i], "-map")) {
+                tmp = argv[i + 1];
+                mapW = stoi(tmp.substr(0, tmp.find('x')));
+                mapH = stoi(tmp.substr(tmp.find('x') + 1, tmp.length() - tmp.find('x')));
+            } else if (!strcmp(argv[i], "-num_asteroids")) {
+                num_asteroids = stoi(argv[i + 1]);
+            } else if (!strcmp(argv[i], "-num_ammo")) {
+                num_ammo = stoi(argv[i + 1]);
+            } else if (!strcmp(argv[i], "-ability_probability")) {
+                ability_probability = stod(argv[i + 1]);
+            }
+        }
+    }
+    return run(new MyFramework(windowW, windowH, mapW, mapH, num_ammo, num_asteroids, ability_probability));
 }

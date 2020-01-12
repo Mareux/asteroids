@@ -14,88 +14,71 @@ Ability::Ability(int abilityNum, double x, double y, int width, int height) : Ga
     this->height = height;
 }
 
-bool Ability::collisionAABBvsCircle(double x, double y, int width, int height) {
-    double n_x = positionX + width / 2 - x;
-    double n_y = positionY + height / 2 - y;
 
-    double closestX = n_x;
-    double closestY = n_y;
+bool Ability::collisionAABBvsCircle(double x, double y, int w, int h) {
+    double circleDistX = abs(positionX - x);
+    double circleDistY = abs(positionY - y);
 
-    double extentX = (width - x) / 2;
-    double extentY = (height - y) / 2;
-
-    closestX = std::clamp(-extentX, extentX, closestX);
-    closestY = std::clamp(-extentY, extentY, closestY);
-
-    bool inside = false;
-
-    if (n_x == closestX && n_y == closestY) {
-        inside = true;
-
-        // if (abs(n_x) > abs(n_y)){
-        //     if (closestX > 0)
-        //         closestX = extentX;
-        //     else
-        //         closestX = -extentX;
-        // } else {
-        //     if (closestY > 0)
-        //         closestY = extentY;
-        //     else
-        //         closestY = -extentY;
-        // }
-    }
-
-    double normalX = n_x - closestX;
-    double normalY = n_y - closestY;
-    double d = dot(normalX, normalY, normalX, normalY);
-    double r = shieldRadius;
-
-    if (d > r * r && !inside)
+    if (circleDistX > (w / 2.0 + shieldRadius))
+        return false;
+    if (circleDistY > (h / 2.0 + shieldRadius))
         return false;
 
-    // d = sqrt(d);
-
-    if (inside)
+    if (circleDistX <= w / 2.0)
+        return true;
+    if (circleDistY <= h / 2.0)
         return true;
 
+    auto cornerDistSq = (circleDistX - w / 2.0) * (circleDistX - w / 2.0)
+                        + (circleDistY - h / 2.0) * (circleDistY - h / 2.0);
+
+    return (cornerDistSq <= shieldRadius * shieldRadius);
 }
 
-void Ability::shield(std::vector<Asteroid> &asteroids, double shipSpeed) {
+void Ability::shield(std::vector<Asteroid> &asteroids, double velocityX, double velocityY) {
     for (auto &asteroid : asteroids) {
         if (collisionAABBvsCircle(asteroid.getLeftUpX(), asteroid.getLeftUpY(), asteroid.getWidth(),
-                                  asteroid.getHeight()))
-            asteroid.setSpeed(shipSpeed);
+                                  asteroid.getHeight())) {
+            asteroid.setPositionX(asteroid.getLeftUpX() - asteroid.getSpeed() * asteroid.getDirectionX() + velocityX);
+            asteroid.setPositionY(asteroid.getLeftUpY() - asteroid.getSpeed() * asteroid.getDirectionY() + velocityY);
+        }
     }
 }
 
-void Ability::homingMissile(double targetX, double targetY) {
-    double d = perpDot(targetX - missileX, targetY - missileY, missileVX, missileVY);
+void Ability::homingMissile(double targetX, double targetY, Bullet *missile) {
+
+
+}
+
+void Ability::follow(double targetX, double targetY, Bullet *missile) {
+    double d = perpDot(targetX - positionX, targetY - positionY, missileVX, missileVY);
     auto theta = asin(
-            d / (sqrt(missileX * missileX + missileY * missileY) * sqrt(targetX * targetX + targetY * targetY)));
+            d / (sqrt(positionX * positionX + positionY * positionY) * sqrt(targetX * targetX + targetY * targetY)));
 
     if (d < 0) {
-        auto dx = directionX * cos(theta) - directionY * sin(theta);
-        auto dy = directionX * sin(theta) + directionY * cos(theta);
+        auto dx = missile->getDirectionX() * cos(theta) - missile->getDirectionY() * sin(theta);
+        auto dy = missile->getDirectionX() * sin(theta) + missile->getDirectionY() * cos(theta);
 
-        directionX = dx;
-        directionY = dy;
+        missile->setDirection(dx, dy);
+
     } else if (d > 0) {
-        auto dx = directionX * cos(theta) + directionY * sin(theta);
-        auto dy = directionX * sin(theta) - directionY * cos(theta);
+        auto dx = missile->getDirectionX() * cos(theta) + missile->getDirectionY() * sin(theta);
+        auto dy = missile->getDirectionX() * -sin(theta) + missile->getDirectionY() * cos(theta);
 
-        directionX = dx;
-        directionY = dy;
+        missile->setDirection(dx, dy);
+
     } else {
-        d = dot(targetX - missileX, targetY - missileY, missileVX, missileVY);
+        d = dot(targetX - positionX, targetY - positionY, missileVX, missileVY);
         theta = acos(
-                d / (sqrt(missileX * missileX + missileY * missileY) * sqrt(targetX * targetX + targetY * targetY)));
+                d /
+                (sqrt(positionX * positionX + positionY * positionY) * sqrt(targetX * targetX + targetY * targetY)));
 
         if (d < 0) {
-            auto dx = directionX * cos(theta) - directionY * sin(theta);
-            auto dy = directionX * sin(theta) + directionY * cos(theta);
+            auto dx = missile->getDirectionX() * cos(theta) - missile->getDirectionY() * sin(theta);
+            auto dy = missile->getDirectionX() * sin(theta) + missile->getDirectionY() * cos(theta);
 
-            directionX = dx;
-            directionY = dy;
+            missile->setDirection(dx, dy);
+
         } else {
 
         }

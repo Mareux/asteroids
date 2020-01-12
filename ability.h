@@ -14,21 +14,24 @@ public:
 
     Ability (int abilityNum, double x, double y, int width, int height);
 
-    bool collisionAABBvsCircle(double x, double y, int width, int height);
+    bool collisionAABBvsCircle(double x, double y, int w, int h);
 
-    void shield(std::vector<Asteroid> &asteroids, double shipSpeed);
+    void shield(std::vector<Asteroid> &asteroids, double velocityX, double velocityY);
 
-    void homingMissile(double targetX, double targetY);
+    void follow(double targetX, double targetY, Bullet *missile);
 
     void getNearestEnemy(std::vector<Asteroid> asteroids, double &asteroidX, double &asteroidY);
 
     int getAbilityNum();
 
+    void homingMissile(double targetX, double targetY, Bullet *missile);
+
 private:
     int abilityNum = 0;
     double missileX, missileY;
-    double missileVX, missileVY;
-    double shieldRadius;
+    double missileVX = 10.0, missileVY = 10.0;
+    double shieldRadius = 50;
+
 };
 
 
