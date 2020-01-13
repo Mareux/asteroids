@@ -1,6 +1,3 @@
-//
-// Created by Mariia Nosko on 10.01.2020.
-//
 
 #ifndef PROJECT2_ASTEROID_H
 #define PROJECT2_ASTEROID_H
@@ -11,14 +8,9 @@ class Asteroid : public GameObject {
 public:
     Asteroid()= default;
 
-    explicit Asteroid(bool big) : GameObject()
-    {
-        this->big = big;
-    }
+    explicit Asteroid(bool big);
 
-    bool isBig(){
-        return big;
-    }
+    bool isBig();
 
     ~Asteroid()= default;
 

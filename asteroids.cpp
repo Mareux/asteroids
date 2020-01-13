@@ -1,5 +1,4 @@
 
-
 #include "game.h"
 
 #define SCREEN_WIDTH 1024
@@ -9,15 +8,7 @@
 
 using namespace std;
 
-double dot(double a_x, double a_y, double b_x, double b_y) {
-    return (a_x * b_x) + (a_y * b_y);
-}
-
-double perpDot(double a_x, double a_y, double b_x, double b_y) {
-    return (a_y * b_x) - (a_x * b_y);
-}
-
-double random_between_two_int(double min, double max) {
+double random_between_two_double(double min, double max) {
     return (min + 1) + (((double) rand()) / (double) RAND_MAX) * (max - (min + 1));
 }
 
@@ -91,19 +82,17 @@ private:
                 asteroid.emplace_back(addBigAsteroid());
             } else
                 asteroid.emplace_back(addSmallAsteroid());
-            asteroid.at(i).setPositionX(randomInt(0, mapWidth, screenWidth / 2 - 50, screenWidth / 2 + 50));
-            asteroid.at(i).setPositionY(randomInt(0, mapHeight, screenHeight / 2 - 50, screenHeight / 2 + 50));
 
-            asteroid.at(i).setDirection(random_between_two_int(-2, 1), random_between_two_int(-2, 1));
-
-            asteroid.at(i).setSpeed(random_between_two_int(0, 4));
+            asteroid.at(i).setPositionX(randomInt(0, mapWidth,
+                    screenWidth / 2 - 50, screenWidth / 2 + 50));
+            asteroid.at(i).setPositionY(randomInt(0, mapHeight,
+                    screenHeight / 2 - 50, screenHeight / 2 + 50));
+            asteroid.at(i).setDirection(random_between_two_double(-2, 1),
+                                        random_between_two_double(-2, 1));
+            asteroid.at(i).setSpeed(random_between_two_double(0, 4));
         }
 
         return asteroid;
-
-    }
-
-    void specialAbulity() {
 
     }
 
@@ -116,22 +105,37 @@ private:
 
             if (asteroidPos->isBig()) {
 
+                double dirX = asteroidPos->getDirectionX();
+                double dirY = asteroidPos->getDirectionY();
+
+                double speed = asteroidPos->getSpeed();
+
+                auto sin30 = -0.98803162409;
+                auto cos30 = 0.15425144988;
+
                 asteroids.erase(asteroidPos);
 
-                cout << "shoot!";
                 asteroids.emplace_back(addSmallAsteroid());
                 auto asteroid = asteroids.size() - 1;
-                asteroids.at(asteroid).setPositionY(y - 20);
-                asteroids.at(asteroid).setPositionX(x - 20);
-                asteroids.at(asteroid).setDirection(-1, -1);
-                asteroids.at(asteroid).setSpeed(5);
+
+                auto dx = dirX * cos30 - dirY * sin30;
+                auto dy = dirX * sin30 + dirY * cos30;
+
+                asteroids.at(asteroid).setDirection(dx, dy);
+                asteroids.at(asteroid).setPositionY(y - 10);
+                asteroids.at(asteroid).setPositionX(x - 10);
+                asteroids.at(asteroid).setSpeed(speed);
 
                 asteroids.emplace_back(addSmallAsteroid());
                 asteroid = asteroids.size() - 1;
-                asteroids.at(asteroid).setPositionY(y + 20);
-                asteroids.at(asteroid).setPositionX(x + 20);
-                asteroids.at(asteroid).setDirection(1, 1);
-                asteroids.at(asteroid).setSpeed(5);
+
+                dx = dirX * cos30 + dirY * sin30;
+                dy = dirX * -sin30 + dirY * cos30;
+
+                asteroids.at(asteroid).setDirection(dx, dy);
+                asteroids.at(asteroid).setPositionY(y + 10);
+                asteroids.at(asteroid).setPositionX(x + 10);
+                asteroids.at(asteroid).setSpeed(speed);
 
             } else {
                 asteroids.erase(asteroidPos);
@@ -142,7 +146,6 @@ private:
             }
         }
     }
-
 
     void moveCamera() {
 
@@ -167,7 +170,7 @@ private:
         } else if (cameraY + screenHeight > mapHeight || mapHeight - ship->getLeftUpY() < screenHeight / 2) {
             cameraY = mapHeight - screenHeight;
         }
-    }//refactor
+    }
 
     static void moveAsteroids(vector<Asteroid> &asteroid, Sprite *asteroidSprite, int screen_w, int screen_h) {
 
@@ -185,29 +188,35 @@ private:
     }
 
     static void splitUpAsteroids(Asteroid &firstAsteroid, Asteroid &secondAsteroid) {
-        int left = std::max(firstAsteroid.getLeftUpX(), secondAsteroid.getLeftUpX());
-        int top = std::max(firstAsteroid.getLeftUpY(), secondAsteroid.getLeftUpY());
-        int right = std::min(firstAsteroid.getRightDownX(), secondAsteroid.getRightDownX());
-        int bottom = std::min(firstAsteroid.getRightDownY(), secondAsteroid.getRightDownY());
-
-        int width = right - left;
-        int height = top - bottom;
-
         double tmpDirX = firstAsteroid.getDirectionX();
         double tmpDirY = firstAsteroid.getDirectionY();
         double tmpSpeed = firstAsteroid.getSpeed();
+
+        auto dirX = firstAsteroid.getLeftUpX() - secondAsteroid.getLeftUpX();
+        auto dirY = firstAsteroid.getLeftUpY() - secondAsteroid.getLeftUpY();
+
+        auto length = sqrt(dirX * dirX + dirY * dirY);
+        auto normalDirX = dirX / length;
+        auto normalDirY = dirY / length;
+
+        firstAsteroid.setPositionX(firstAsteroid.getLeftUpX() + firstAsteroid.getSpeed() * normalDirX +
+                                   secondAsteroid.getDirectionX() * secondAsteroid.getSpeed());
+        firstAsteroid.setPositionY(firstAsteroid.getLeftUpY() + firstAsteroid.getSpeed() * normalDirY +
+                                   secondAsteroid.getDirectionY() * secondAsteroid.getSpeed());
 
         firstAsteroid.setDirection(secondAsteroid.getDirectionX(), secondAsteroid.getDirectionY());
         firstAsteroid.setSpeed(secondAsteroid.getSpeed());
         secondAsteroid.setDirection(tmpDirX, tmpDirY);
         secondAsteroid.setSpeed(tmpSpeed);
+
     }
 
     static void asteroidsCollision(vector<Asteroid> &asteroid) {
         for (auto firstIter = 0; firstIter < asteroid.size(); ++firstIter) {
             for (auto secondIter = firstIter + 1; secondIter < asteroid.size(); ++secondIter) {
                 if (asteroid[firstIter].collision(asteroid[secondIter].getLeftUpX(),
-                                                  asteroid[secondIter].getLeftUpY(), asteroid[secondIter].getWidth(),
+                                                  asteroid[secondIter].getLeftUpY(),
+                                                  asteroid[secondIter].getWidth(),
                                                   asteroid[secondIter].getHeight())) {
                     splitUpAsteroids(asteroid[firstIter], asteroid[secondIter]);
                 }
@@ -217,15 +226,15 @@ private:
 
     bool shipCollision() {
 
-        for (auto & asteroid : asteroids ){
+        for (auto &asteroid : asteroids) {
             if (ship->collision(asteroid.getLeftUpX(), asteroid.getLeftUpY(),
-                    asteroid.getWidth(), asteroid.getHeight()))
+                                asteroid.getWidth(), asteroid.getHeight()))
                 return true;
         }
         return false;
     }
 
-    void restart(){
+    void restart() {
         asteroids.clear();
         delete ship;
 
@@ -265,24 +274,23 @@ public:
         shipSprite = createSprite("data/spaceship.png");
         bulletSprite = createSprite("data/bullet.png");
         cursor = createSprite("data/circle.tga");
-        abilitySprites.push_back(createSprite("data/shield.png"));
-        abilitySprites.push_back(createSprite("data/missile.png"));
-        abilitySprites.push_back(createSprite("data/autoshoot.png"));
+        abilitySprites.push_back(createSprite("data/shield.png"));;
         abilitySprites.push_back(createSprite("data/sparkle.png"));
-
 
         getSpriteSize(bigAsteroid, widthBig, heightBig);
         getSpriteSize(smallAsteroid, widthSmall, heightSmall);
 
         asteroids = createAsteroids(numAsteroids);
         createShip();
+
         getSpriteSize(cursor, cursorW, cursorH);
         showCursor(false);
+
         return true;
     }
 
     virtual void Close() {
-        system("leaks Project2");
+//        system("leaks Project2");
     }
 
     virtual bool Tick() {
@@ -293,13 +301,14 @@ public:
         if ((currentFrameTime - lastFrameTime) >= FRAME_CONTROL) {
             lastFrameTime = currentFrameTime;
 
+
             moveCamera();
+            ship->getObjectFromUnderworld(mapWidth, mapHeight);
             ship->shipMovement();
 
 
-            asteroidsCollision(asteroids);
-
             moveAsteroids(asteroids, smallAsteroid, mapWidth, mapHeight);
+            asteroidsCollision(asteroids);
 
             if (shipCollision())
                 gameOver = true;
@@ -307,17 +316,20 @@ public:
             ship->moveBullet(mapWidth, mapHeight);
             dealWithBulletCollision();
 
-            if (!abilityUsed)
+            if (!abilityUsed) {
                 ship->getAbility();
-            if (abilityUsed) {
-                ship->useAbility(asteroids, screenWidth, screenHeight);
-
-//                abilityUsed = false;
+                timer = 600;
             }
-            ship->getObjectFromUnderworld(mapWidth, mapHeight);
+            if (abilityUsed) {
+                ship->useAbility(asteroids);
+                --timer;
+                if (timer == 0) {
+                    ship->deleteCurrentAbility();
+                    abilityUsed = false;
+                }
+            }
         }
 
-        showCursor(true);
         for (auto &asteroid : asteroids) {
             if (asteroid.isBig())
                 drawSprite(bigAsteroid, asteroid.getScreenX() - cameraX, asteroid.getScreenY() - cameraY);
@@ -326,10 +338,10 @@ public:
         }
 
         drawSprite(cursor, mouse_x - cursorW / 2, mouse_y - cursorH / 2);
-        ship->drawAbility(abilitySprites, cameraX, cameraY);
+        ship->drawAbility(abilitySprites, cameraX, cameraY, abilityUsed);
         drawSprite(shipSprite, ship->getScreenX() - cameraX, ship->getScreenY() - cameraY);
         ship->drawBullet(bulletSprite, cameraX, cameraY);
-        if (gameOver)
+        if (gameOver || asteroids.size() == 0)
             restart();
         return false;
     }
@@ -342,7 +354,6 @@ public:
     virtual void onMouseButtonClick(FRMouseButton button, bool isReleased) {
         if (button == FRMouseButton::LEFT && !isReleased) {
             ship->createBullet(mouse_x + cameraX, mouse_y + cameraY);
-            cout << mouse_x << " : " << mouse_y << endl;
         }
         if (button == FRMouseButton::RIGHT && !isReleased) {
             abilityUsed = true;
@@ -404,5 +415,11 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+
+    if (mapW < windowW)
+        mapW = windowW;
+    if (mapH < windowH)
+        mapH = windowH;
+
     return run(new MyFramework(windowW, windowH, mapW, mapH, num_ammo, num_asteroids, ability_probability));
 }

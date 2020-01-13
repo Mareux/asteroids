@@ -1,6 +1,3 @@
-//
-// Created by Mariia Nosko on 10.01.2020.
-//
 
 #ifndef PROJECT2_BULLET_H
 #define PROJECT2_BULLET_H

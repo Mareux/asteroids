@@ -1,5 +1,11 @@
-//
-// Created by Mariia Nosko on 10.01.2020.
-//
 
 #include "asteroid.h"
+
+Asteroid::Asteroid(bool big) : GameObject()
+{
+    this->big = big;
+}
+
+bool Asteroid::isBig(){
+    return big;
+}

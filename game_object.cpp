@@ -1,6 +1,3 @@
-//
-// Created by Mariia Nosko on 10.01.2020.
-//
 
 #include "game_object.h"
 
@@ -11,14 +8,14 @@ void GameObject :: movement() {
 
 void GameObject :: getObjectFromUnderworld(int map_width, int map_height)
 {
-    if (positionX - width / 2.0 > map_width)
-        positionX = - width / 2.0;
-    else if (positionX + width < 0)
-        positionX = map_width + width / 2.0;
-    if (positionY - height / 2.0 > map_height)
-        positionY = - height / 2.0;
-    else if (positionY + height < 0)
-        positionY = map_height + height / 2.0;
+    if (positionX + width < 0)
+        positionX = map_width + width / 2;
+    else if (positionX - width / 2 > map_width)
+        positionX = -width / 2;
+    if (positionY + width < 0)
+        positionY = map_height + height / 2;
+    else if (positionY - height / 2 > map_height)
+        positionY = -height / 2;
 }
 
 bool GameObject :: collision(double x, double y, int w, int h) {

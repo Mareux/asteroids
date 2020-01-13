@@ -10,7 +10,16 @@ class Ship : public GameObject {
 public:
     Ship(double x, double y, double speed, double dirX, double dirY, int width, int height, int bulletQuantity);
 
-    ~Ship() = default;
+    ~Ship(){
+        for (auto &bullet:spawnedBullet)
+            delete bullet;
+        spawnedBullet.clear();
+        for (auto &ability:spawnedAbilities)
+            delete ability;
+        spawnedAbilities.clear();
+        delete currentAbility;
+        delete missile;
+    };
 
     void createBullet(int x, int y);
 
@@ -20,9 +29,9 @@ public:
 
     void getAbility();
 
-    void useAbility(std::vector<Asteroid> &asteroids, int screen_w, int screen_h);
+    void useAbility(std::vector<Asteroid> &asteroids);
 
-    void drawAbility(std::vector<Sprite*> abilitySprite, double cameraX, double cameraY);
+    void drawAbility(std::vector<Sprite *> abilitySprite, double cameraX, double cameraY, bool used);
 
     bool checkBulletCollision(std::vector<Asteroid>& asteroids, std::__wrap_iter<Asteroid*> &asteroidPosition);
 
@@ -36,7 +45,7 @@ public:
 
     void createAbility(double x, double y, int width, int height);
 
-    void applyVelocity(int &x, int &y);
+    void deleteCurrentAbility();
 
 
 private:
@@ -49,10 +58,6 @@ private:
     double accelerationX = 0, accelerationY = 0;
     double velocityX = 0, velocityY = 0;
     double frictionX = 0, frictionY = 0;
-
-    Asteroid * getTarget(std::vector<Asteroid> asteroids, int mouseX, int mouseY);
-
-    void initCurrentAbility(const std::vector<Asteroid>& asteroids, int mouseX, int mouseY);
 
 };
 

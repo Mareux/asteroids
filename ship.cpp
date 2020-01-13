@@ -1,6 +1,4 @@
-//
-// Created by Mariia Nosko on 10.01.2020.
-//
+
 #include <utility>
 
 #include "game.h"
@@ -40,7 +38,7 @@ void Ship::createBullet(int x, int y) {
         delete[] *oldestBullet;
         spawnedBullet.erase(oldestBullet);
     }
-} //rename
+}
 
 void Ship::moveBullet(int screen_w, int screen_h) {
     for (auto &iter : spawnedBullet) {
@@ -70,63 +68,35 @@ void Ship::getAbility() {
     }
 }
 
-Asteroid * Ship::getTarget(std::vector<Asteroid> asteroids, int mouseX, int mouseY) {
-    Asteroid *target = NULL;
-
-    for (auto &asteroid : asteroids){
-        if (asteroid.collision(mouseX, mouseY, 1, 1))
-            return &asteroid;
-    }
-
-    return target;
+void Ship::deleteCurrentAbility() {
+    delete []currentAbility;
+    currentAbility = NULL;
 }
 
-void Ship::initCurrentAbility(const std::vector<Asteroid>& asteroids, int mouseX, int mouseY){
+void Ship::useAbility(std::vector<Asteroid> &asteroids) {
     if (currentAbility) {
-        if (currentAbility->getAbilityNum() == 3) {
-
-        } else if (currentAbility->getAbilityNum() == 1) {
-
-        } else {
-
-        }
+        currentAbility->setPositionX(getLeftUpX());
+        currentAbility->setPositionY(getLeftUpY());
+        currentAbility->shield(asteroids,
+                               velocityX, velocityY,
+                               positionX, positionY);
     }
 }
 
-void Ship::useAbility(std::vector<Asteroid> &asteroids, int screen_w, int screen_h) {
-    if (currentAbility) {
-        if (currentAbility->getAbilityNum() == 3) {
-            double x, y;
-            currentAbility->setPositionX(positionX);
-            currentAbility->setPositionY(positionY);
-            currentAbility->getNearestEnemy(asteroids, x, y);
-            createBullet(x, y);
-            delete[]currentAbility;
-            currentAbility = NULL;
-        } else if (currentAbility->getAbilityNum() == 1) {
-            currentAbility->setPositionX(getLeftUpX());
-            currentAbility->setPositionY(getLeftUpY());
-            currentAbility->shield(asteroids,
-                                   velocityX, velocityY);
-        } else {
-
-        }
-    }
-}
-
-void Ship::drawAbility(std::vector<Sprite*> abilitySprite, double cameraX, double cameraY) {
+void Ship::drawAbility(std::vector<Sprite *> abilitySprite, double cameraX, double cameraY, bool used) {
     for (auto &iter : spawnedAbilities) {
-        drawSprite(abilitySprite.at(iter->getAbilityNum() - 1), iter->getScreenX() - cameraX, iter->getScreenY() - cameraY);
+        drawSprite(abilitySprite.at(0), iter->getScreenX() - cameraX,
+                iter->getScreenY() - cameraY);
     }
     if (currentAbility) {
-        if (currentAbility->getAbilityNum() == 1) {
+        if (used) {
             auto r = 50;
             auto length = r * 1.5;
 
             for (int y = r; y >= -r; y -= 2) {
                 for (int x = -length; x <= length; x++) {
                     if ((int)sqrt(x * x + y * y) == 50)
-                        drawSprite(abilitySprite.at(3),
+                        drawSprite(abilitySprite.at(1),
                                    currentAbility->getScreenX() - cameraX + x,
                                    currentAbility->getScreenY() - cameraY + y);
                 }
@@ -164,11 +134,6 @@ void Ship::applyVelocity(double &x, double &y) {
     y += velocityY;
 }
 
-void Ship::applyVelocity(int &x, int &y) {
-    x += velocityX;
-    y += velocityY;
-}
-
 void Ship::shipMovement() {
     frictionX = velocityX * -0.03;
     frictionY = velocityY * -0.03;
@@ -192,7 +157,7 @@ void Ship::shipMovement() {
 }
 
 void Ship::createAbility(double x, double y, int width, int height) {
-    auto *ability = new Ability(rand() % 3 + 1, x, y, width, height);
+    auto *ability = new Ability(x, y, width, height);
 
     spawnedAbilities.push_back(ability);
 }
