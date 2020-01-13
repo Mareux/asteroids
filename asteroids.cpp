@@ -312,11 +312,9 @@ public:
         if ((currentFrameTime - lastFrameTime) >= FRAME_CONTROL) {
             lastFrameTime = currentFrameTime;
 
-
             moveCamera();
             ship->getObjectFromUnderworld(mapWidth, mapHeight);
             ship->shipMovement();
-
 
             moveAsteroids(asteroids, smallAsteroid, mapWidth, mapHeight);
             asteroidsCollision(asteroids);
