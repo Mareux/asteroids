@@ -12,7 +12,7 @@ void GameObject :: getObjectFromUnderworld(int map_width, int map_height)
         positionX = map_width + width / 2;
     else if (positionX - width / 2 > map_width)
         positionX = -width / 2;
-    if (positionY + width < 0)
+    if (positionY + height < 0)
         positionY = map_height + height / 2;
     else if (positionY - height / 2 > map_height)
         positionY = -height / 2;

@@ -73,8 +73,6 @@ private:
 
         int width, height;
 
-        cout << asteroidQuantity << endl;
-
         for (auto i = 0; i < asteroidQuantity; ++i) {
             bool big = rand() % 2;
 
@@ -246,6 +244,19 @@ private:
         createShip();
     }
 
+    bool isInsideScreen(double x, double y, int w, int h){
+        if (x + w < 0)
+            return false;
+        else if (x - w / 2 > screenWidth)
+            return false;
+        if (y + h < 0)
+            return false;
+        else if (y - h / 2 > screenHeight)
+            return false;
+        return true;
+    }
+
+
 public:
 
     MyFramework(int screen_width, int screen_height, int map_width, int map_height,
@@ -331,10 +342,12 @@ public:
         }
 
         for (auto &asteroid : asteroids) {
-            if (asteroid.isBig())
-                drawSprite(bigAsteroid, asteroid.getScreenX() - cameraX, asteroid.getScreenY() - cameraY);
-            else
-                drawSprite(smallAsteroid, asteroid.getScreenX() - cameraX, asteroid.getScreenY() - cameraY);
+            if (isInsideScreen(asteroid.getLeftUpX(), asteroid.getLeftUpY(), asteroid.getWidth(), asteroid.getHeight())) {
+                if (asteroid.isBig())
+                    drawSprite(bigAsteroid, asteroid.getScreenX() - cameraX, asteroid.getScreenY() - cameraY);
+                else
+                    drawSprite(smallAsteroid, asteroid.getScreenX() - cameraX, asteroid.getScreenY() - cameraY);
+            }
         }
 
         drawSprite(cursor, mouse_x - cursorW / 2, mouse_y - cursorH / 2);
